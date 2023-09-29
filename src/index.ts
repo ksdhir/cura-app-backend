@@ -5,9 +5,15 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import "dotenv/config";
-
 import sampleRoutes from "./Routes/sampleRoutes";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware";
+import admin from "firebase-admin";
+
+const serviceAccount = require("./util/cura-5aa30-firebase-adminsdk-41ht6-6560710166.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 const SERVER_PORT = process.env.PORT || 5000;
 
