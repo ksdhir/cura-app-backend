@@ -13,10 +13,12 @@ import sampleRoutes from "./routes/sampleRoutes";
 import caregiverRouter from "./routes/caregiverRoutes";
 import elderRouter from "./routes/elderRoutes";
 
-const serviceAccount = require("./util/cura-5aa30-firebase-adminsdk-41ht6-6560710166.json");
+// import Firebase configs
+import firebaseAdminAccount from "./util/firebaseAdminAccount";
+
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(firebaseAdminAccount()),
 });
 
 const SERVER_PORT = process.env.PORT || 5000;
