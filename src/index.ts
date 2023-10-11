@@ -11,6 +11,7 @@ import admin from "firebase-admin";
 //Routes
 import sampleRoutes from "./routes/sampleRoutes";
 import caregiverRouter from "./routes/caregiverRoutes";
+import elderRouter from "routes/elderRoutes";
 
 const serviceAccount = require("./util/cura-5aa30-firebase-adminsdk-41ht6-6560710166.json");
 
@@ -37,6 +38,7 @@ app.use(bodyParser.json());
 // Routes
 app.use("/api", sampleRoutes);
 app.use("/api/caregiver", caregiverRouter);
+app.use("/api/elder", elderRouter);
 
 // Middlewares
 app.use(notFound);
