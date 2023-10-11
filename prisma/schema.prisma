@@ -12,18 +12,18 @@ datasource db {
 
 model ElderProfile {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-  name String
-  preferredName String
-  dateOfBirth DateTime
+  name String?
+  preferredName String?
+  dateOfBirth DateTime?
   email String @unique
-  phoneNumber String
-  sex String
+  phoneNumber String?
+  sex String?
   medicalConditions String[]
-  bloodType String
+  bloodType String?
   allergies String[]
-  notes String
+  notes String?
   emergencyContacts String[]
-  userFirebaseId String
+  userFirebaseId String?
   heartRateRecords HeartRateRecord[]
   defaultLocation String[]
 
@@ -33,40 +33,35 @@ model ElderProfile {
 
 model CareGiverProfile {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-  name String
-  preferredName String
+  name String?
+  preferredName String?
   email String @unique
-  phoneNumber String
+  phoneNumber String?
   notifications Notification[]
   elderProfiles ElderProfile[]
-  requestToken String
+  requestToken String? //TODO: ask meraldo about this
 }
 
 model Notification {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-  elderProfileId String
-  timestamp DateTime
+  elderProfileId String?
+  timestamp DateTime?
   type NotificationType @default(OTHERS)
   actionType NotificationActionType @default(NO_ACTION)
-
   careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
   careGiverProfileId String?
 }
 
 model HeartRateRecord {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-  
   elderProfile ElderProfile? @relation(fields: [elderProfileId], references: [id])
   elderProfileId String?
-
-  currentBpm Int
-  timestamp DateTime
-  upTo90Avg Int
-  upTo90Min Int
-  upTo90Max Int
+  currentBpm Int?
+  timestamp DateTime?
+  upTo90Avg Int?
+  upTo90Min Int?
+  upTo90Max Int?
 }
-
-
 
 enum NotificationType {
   MOVEMENT
