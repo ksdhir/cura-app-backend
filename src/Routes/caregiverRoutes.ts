@@ -3,7 +3,7 @@ import {
   caregiverProfile,
   caregiverProfileCreation,
   caregiverProfilePatch,
-} from "../controllers/caregiverProfileController";
+} from "../controllers/caregiverController";
 
 const caregiverRouter = express.Router();
 
