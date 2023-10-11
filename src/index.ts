@@ -5,9 +5,12 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import "dotenv/config";
-import sampleRoutes from "./Routes/sampleRoutes";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware";
 import admin from "firebase-admin";
+
+//Routes
+import sampleRoutes from "./routes/sampleRoutes";
+import caregiverRouter from "./routes/caregiverRoutes";
 
 const serviceAccount = require("./util/cura-5aa30-firebase-adminsdk-41ht6-6560710166.json");
 
@@ -33,6 +36,7 @@ app.use(bodyParser.json());
 
 // Routes
 app.use("/api", sampleRoutes);
+app.use("/api/caregiver", caregiverRouter);
 
 // Middlewares
 app.use(notFound);
