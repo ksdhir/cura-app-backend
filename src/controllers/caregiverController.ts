@@ -5,8 +5,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // @route   POST /api/caregiver/profile
-// @access  Public
-// BLOCKER: need Google Auth to implement this
+// @access  Authenticated
 const caregiverProfileCreation = asyncHandler(
   async (req: Request, res: Response) => {
     try {
@@ -46,45 +45,29 @@ const caregiverProfileCreation = asyncHandler(
   }
 );
 
-// @route   PATCH /api/caregiver/:id
-// @access  Authenticated
-const caregiverProfilePatch = asyncHandler(
-  async (req: Request, res: Response) => {
-    //get the id wildcard
-    const id = req.params.id;
-
-    //   name String?
-    //   preferredName String?
-    //   phoneNumber String?
-
-    // const updateUser = await prisma.user.update({
-    //   where: {
-    //     email: 'viola@prisma.io',
-    //   },
-    //   data: {
-    //     name: 'Viola the Magnificent',
-    //   },
-    // })
-
-    res.send("Caregiver profile is updating...");
-  }
-);
-
-// @route   GET /api/caregiver/:id
+// @route   GET /api/caregiver/profile
 // @access  Authenticated
 const caregiverProfile = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const email = req.query.email;
+    const caregiver = await prisma.careGiverProfile.findUnique({
+      where: {
+        email: email.toString(),
+      },
+    });
 
-  const caregiver = await prisma.careGiverProfile.findUnique({
-    where: {
-      email: "test@gmail.com",
-    },
-  });
+    // remove unwanted params
+    delete caregiver?.id;
+    delete caregiver?.requestToken;
 
-  res.send({
-    res: caregiver,
-    message: "Caregiver profile...",
-  });
+    if (caregiver) {
+      res.status(200).json({ caregiver });
+    } else {
+      res.status(400).json({ message: "Caregiver profile does not exist" });
+    }
+  } catch (error) {
+    res.status(400).json({ errorx: "An error occurred", error: error });
+  }
 });
 
-export { caregiverProfileCreation, caregiverProfilePatch, caregiverProfile };
+export { caregiverProfileCreation, caregiverProfile };
