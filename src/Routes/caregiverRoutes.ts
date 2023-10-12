@@ -5,10 +5,13 @@ import {
   caregiverProfilePatch,
 } from "../controllers/caregiverController";
 
+// middleware firebase auth
+import authTokenVerifyMiddleware from "../middlewares/authMiddleware";
+
 const caregiverRouter = express.Router();
 
-caregiverRouter.post("/:id", caregiverProfileCreation);
-caregiverRouter.put("/:id", caregiverProfilePatch);
-caregiverRouter.get("/:id", caregiverProfile);
+// profile routes
+caregiverRouter.post("/profile", authTokenVerifyMiddleware, caregiverProfileCreation);
+caregiverRouter.get("/profile", caregiverProfile);
 
 export default caregiverRouter;
