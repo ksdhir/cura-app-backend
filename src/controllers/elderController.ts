@@ -40,9 +40,54 @@ const updateElderHeartRateThreshold = asyncHandler(
   }
 );
 
+const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.body.email) {
+    res.status(400).json({
+      message: "Missing email",
+    });
+  }
+
+  try {
+    const elder = await prisma.elderProfile.upsert({
+      where: {
+        email: req.body.email,
+      },
+      update: {
+        name: req.body.name,
+        preferredName: req.body.preferredName,
+        phoneNumber: req.body.phoneNumber,
+        age: req.body.age,
+        sex: req.body.sex,
+        bloodType: req.body.bloodType,
+        notes: req.body.notes,
+      },
+      create: {
+        email: req.body.email,
+        name: req.body.name ?? null,
+        preferredName: req.body.preferredName ?? null,
+        phoneNumber: req.body.phoneNumber ?? null,
+        age: req.body.age ?? null,
+        sex: req.body.sex ?? null,
+        bloodType: req.body.bloodType ?? null,
+        notes: req.body.notes ?? null,
+      },
+    });
+
+    res.json({
+      message: "Successfully upsert caregiver profile",
+      profile: elder,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Failed to upsert elder profile",
+    });
+  }
+});
+
 export {
   setElderHeartRateDetail,
   getElderHeartRateDetail,
   appendNotificationLog,
   updateElderHeartRateThreshold,
+  upsertProfile,
 };
