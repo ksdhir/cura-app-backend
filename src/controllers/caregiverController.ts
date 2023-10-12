@@ -4,22 +4,45 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// @route   POST /api/caregiver/:id
+// @route   POST /api/caregiver/profile
 // @access  Public
 // BLOCKER: need Google Auth to implement this
 const caregiverProfileCreation = asyncHandler(
   async (req: Request, res: Response) => {
-    //   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-    //   name String?
-    //   preferredName String?
-    //   email String @unique
-    //   phoneNumber String?
-    //   notifications Notification[]
-    //   elderProfiles ElderProfile[]
-    //   requestToken String? //TODO: ask meraldo about this
-    // }
+    try {
+      const caregiver = await prisma.careGiverProfile.upsert({
+        where: {
+          email: req.body.email,
+        },
+        update: {
+          name: req.body.name,
+          preferredName: req.body.preferredName,
+          phoneNumber: req.body.phoneNumber,
+          requestToken: req.body.requestToken ?? null,
+        },
+        create: {
+          name: req.body.name,
+          preferredName: req.body.preferredName,
+          email: req.body.email,
+          phoneNumber: req.body.phoneNumber,
+          requestToken: req.body.requestToken ?? null,
+        },
+      });
 
-    res.send("Caregiver is running...");
+      if (caregiver) {
+        res
+          .status(200)
+          .json({ message: "Caregiver profile created successfully" });
+      } else {
+        res
+          .status(400)
+          .json({ message: "Query failed to update user profile" });
+      }
+    } catch (error) {
+      // Handle the error, log it, and send an error response to the client
+      // console.error('Error in caregiverProfileCreation:', error);
+      res.status(400).json({ errorx: "An error occurred", error: error });
+    }
   }
 );
 

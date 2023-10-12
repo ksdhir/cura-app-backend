@@ -1,0 +1,2 @@
+const IS_FIREBASE_MIDDLEWARE = false;
+export { IS_FIREBASE_MIDDLEWARE };
