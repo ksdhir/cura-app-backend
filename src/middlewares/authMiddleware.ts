@@ -8,12 +8,10 @@ const authTokenVerifyMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-
   if (!IS_FIREBASE_MIDDLEWARE) {
     next();
     return;
   }
-
 
   const tokenString = req.headers["authorization"]?.split(" ") ?? null;
 
