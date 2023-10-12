@@ -57,9 +57,12 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
         preferredName: req.body.preferredName,
         phoneNumber: req.body.phoneNumber,
         age: req.body.age,
-        sex: req.body.sex,
-        bloodType: req.body.bloodType,
-        notes: req.body.notes,
+        sex: req.body.sex ?? "PREFER_NOT_TO_SAY",
+        bloodType: req.body.bloodType ?? null,
+        notes: req.body.notes ?? null,
+        medications: req.body.medications ?? null,
+        medicalConditions: req.body.medicalConditions ?? null,
+        allergies: req.body.allergies ?? null,
       },
       create: {
         email: req.body.email,
@@ -67,15 +70,19 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
         preferredName: req.body.preferredName ?? null,
         phoneNumber: req.body.phoneNumber ?? null,
         age: req.body.age ?? null,
-        sex: req.body.sex ?? null,
+        sex: req.body.sex ?? "PREFER_NOT_TO_SAY",
         bloodType: req.body.bloodType ?? null,
         notes: req.body.notes ?? null,
+        medications: req.body.medications ?? null,
+        medicalConditions: req.body.medicalConditions ?? null,
+        allergies: req.body.allergies ?? null,
       },
     });
 
     res.json({
       message: "Successfully upsert caregiver profile",
       profile: elder,
+      body: req.body,
     });
   } catch (error) {
     res.status(400).json({

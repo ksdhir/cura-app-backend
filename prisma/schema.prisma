@@ -17,10 +17,11 @@ model ElderProfile {
   age Int?
   email String @unique
   phoneNumber String?
-  sex String?
-  medicalConditions String[]
-  bloodType String?
-  allergies String[]
+  sex SexEnum? @default(PREFER_NOT_TO_SAY)
+  medicalConditions String?
+  medications String?
+  bloodType BloodType?
+  allergies String?
   notes String?
   emergencyContacts String[]
   heartRateRecords HeartRateRecord[]
@@ -44,7 +45,7 @@ model Notification {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
   elderProfileId String?
   timestamp DateTime?
-  type NotificationType @default(OTHERS)
+  type NotificationType? @default(OTHERS)
   actionType NotificationActionType @default(NO_ACTION)
   careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
   careGiverProfileId String?
@@ -75,4 +76,25 @@ enum NotificationActionType {
   NO_ACTION
   PENDING
   OTHERS
+}
+
+enum SexEnum {
+  MALE
+  FEMALE
+  PREFER_NOT_TO_SAY
+}
+
+enum BloodType {
+  A
+  B
+  AB
+  O
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
 }
