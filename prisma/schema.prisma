@@ -14,7 +14,7 @@ model ElderProfile {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
   name String?
   preferredName String?
-  dateOfBirth DateTime?
+  age Int?
   email String @unique
   phoneNumber String?
   sex String?
@@ -23,10 +23,8 @@ model ElderProfile {
   allergies String[]
   notes String?
   emergencyContacts String[]
-  userFirebaseId String?
   heartRateRecords HeartRateRecord[]
   defaultLocation String[]
-
   careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
   careGiverProfileId String?
 }
@@ -67,6 +65,7 @@ enum NotificationType {
   MOVEMENT
   FALL
   CRITICAL_HEART_RATE
+  CONNECTION_REQUEST
   OTHERS
 }
 
@@ -74,5 +73,6 @@ enum NotificationActionType {
   ACCEPT
   REJECT
   NO_ACTION
+  PENDING
   OTHERS
 }
