@@ -1,8 +1,7 @@
 import express from "express";
 import {
   caregiverProfile,
-  caregiverProfileCreation,
-  caregiverProfilePatch,
+  caregiverProfileCreation
 } from "../controllers/caregiverController";
 
 // middleware firebase auth
