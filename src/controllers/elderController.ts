@@ -91,10 +91,38 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
+const getProfileDetails = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.query.email) {
+    res.status(400).json({
+      message: "Invalid Query Params",
+    });
+  }
+
+  try {
+    const elder = await prisma.elderProfile.findUnique({
+      where: {
+        email: req.query.email as string,
+      },
+    });
+
+    if (!elder) throw new Error("Elder not found");
+
+    res.status(400).json({
+      message: "Successfully fetched elder profile",
+      profile: elder,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Failed to fetch elder profile",
+    });
+  }
+});
+
 export {
   setElderHeartRateDetail,
   getElderHeartRateDetail,
   appendNotificationLog,
   updateElderHeartRateThreshold,
   upsertProfile,
+  getProfileDetails,
 };

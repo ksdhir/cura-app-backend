@@ -1,6 +1,7 @@
 import {
   appendNotificationLog,
   getElderHeartRateDetail,
+  getProfileDetails,
   setElderHeartRateDetail,
   updateElderHeartRateThreshold,
   upsertProfile,
@@ -15,6 +16,6 @@ elderRouter.post("/append-notification-log/:id", appendNotificationLog);
 elderRouter.patch("/update-heart-threshold/:id", updateElderHeartRateThreshold);
 
 elderRouter.post("/profile", upsertProfile);
-// elderRouter.get("/profile", caregiverProfile);
+elderRouter.get("/profile", getProfileDetails);
 
 export default elderRouter;
