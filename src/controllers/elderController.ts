@@ -181,7 +181,6 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
         heartRateThreshold: {
           minimum: MIN_HEART_RATE,
           maximum: MAX_HEART_RATE,
-          lastUpdated: null,
         } as HeartRateThreshold,
       },
     });
@@ -194,6 +193,7 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
   } catch (error) {
     res.status(400).json({
       message: "Failed to upsert elder profile",
+      detail: error.message,
     });
   }
 });
@@ -353,7 +353,43 @@ const removeEmergencyContact = asyncHandler(
 // @payload/header firebase id and token
 const updateElderHeartRateThreshold = asyncHandler(
   async (req: Request, res: Response) => {
-    res.send("update heart rate threshold...");
+    if (!req.body.email || !req.body.minimum || !req.body.maximum) {
+      res.status(400).json({
+        message: "Invalid Parameters",
+      });
+    }
+
+    try {
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: req.body.email as string,
+        },
+      });
+
+      if (!elder) throw new Error("Elder not found");
+
+      const updated = await prisma.elderProfile.update({
+        where: {
+          email: req.body.email as string,
+        },
+        data: {
+          heartRateThreshold: {
+            minimum: req.body.minimum,
+            maximum: req.body.maximum,
+          },
+        },
+      });
+
+      res.json({
+        message: "Threshold has been updated",
+        detail: updated.heartRateThreshold,
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: "Failed to update elder heart rate threshold",
+        detail: error.message,
+      });
+    }
   }
 );
 
@@ -389,7 +425,7 @@ const getElderHeartRateThreshold = asyncHandler(
       });
     } catch (error) {
       res.status(400).json({
-        message: "Failed to upsert elder profile",
+        message: "Failed to fetch elder heart rate threshold",
         detail: error.message,
       });
     }

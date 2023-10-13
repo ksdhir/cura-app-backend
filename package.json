@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "start": "nodemon",
-    "prisma": "npx prisma generate && npx prisma db push && npx prisma studio"
+    "prisma": "npx prisma generate && npx prisma db push && npx prisma studio",
+    "dev": "npx prisma generate && npx prisma db push && nodemon"
   },
   "author": "",
   "license": "ISC",

@@ -72,7 +72,7 @@ type EmergencyContactRelationship {
 type HeartRateThreshold {
   minimum Int
   maximum Int
-  lastUpdated DateTime
+  lastUpdated DateTime @default(now())
 }
 
 //ENUMS
