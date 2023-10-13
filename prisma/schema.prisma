@@ -23,11 +23,11 @@ model ElderProfile {
   bloodType BloodType?
   allergies String?
   notes String?
-  emergencyContacts String[]
   heartRateRecords HeartRateRecord[]
   defaultLocation String[]
-  careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
-  careGiverProfileId String?
+  emergencyContacts CareGiverProfile? @relation(fields: [careGiverIds], references: [id])
+  careGiverIds String[]  @db.ObjectId
+  emergencyContactRelationships EmergencyContactRelationship[]
 }
 
 model CareGiverProfile {
@@ -37,8 +37,8 @@ model CareGiverProfile {
   email String @unique
   phoneNumber String?
   notifications Notification[]
-  elderProfiles ElderProfile[]
-  requestToken String? //TODO: ask meraldo about this
+  requestToken String? 
+  elders ElderProfile[]
 }
 
 model Notification {
@@ -62,6 +62,13 @@ model HeartRateRecord {
   upTo90Max Int?
 }
 
+//TYPE
+type EmergencyContactRelationship {
+  email String
+  relationship String?
+}
+
+//ENUMS
 enum NotificationType {
   MOVEMENT
   FALL

@@ -1,4 +1,5 @@
 import {
+  addEmergencyContact,
   appendNotificationLog,
   getElderHeartRateDetail,
   getProfileDetails,
@@ -17,5 +18,8 @@ elderRouter.patch("/update-heart-threshold/:id", updateElderHeartRateThreshold);
 
 elderRouter.post("/profile", upsertProfile);
 elderRouter.get("/profile", getProfileDetails);
+
+//Emergency Contact
+elderRouter.post("/add-emergency-contact", addEmergencyContact);
 
 export default elderRouter;
