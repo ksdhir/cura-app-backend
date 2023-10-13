@@ -28,6 +28,7 @@ model ElderProfile {
   emergencyContacts CareGiverProfile? @relation(fields: [careGiverIds], references: [id])
   careGiverIds String[]  @db.ObjectId
   emergencyContactRelationships EmergencyContactRelationship[]
+  heartRateThreshold HeartRateThreshold?
 }
 
 model CareGiverProfile {
@@ -66,6 +67,12 @@ model HeartRateRecord {
 type EmergencyContactRelationship {
   email String
   relationship String?
+}
+
+type HeartRateThreshold {
+  minimum Int
+  maximum Int
+  lastUpdated DateTime
 }
 
 //ENUMS

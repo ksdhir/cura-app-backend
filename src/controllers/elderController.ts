@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { HeartRateThreshold, PrismaClient } from "@prisma/client";
+import { MIN_HEART_RATE, MAX_HEART_RATE } from "../constants";
 
 const prisma = new PrismaClient();
 
@@ -76,7 +77,9 @@ const setElderHeartRateDetail = asyncHandler(
       if (heartRateRecord) {
         res.status(200).json({ heartRateRecord });
       } else {
-        res.status(400).json({ message: "Could not append Heart Rate Details" });
+        res
+          .status(400)
+          .json({ message: "Could not append Heart Rate Details" });
       }
     } catch (error) {
       console.log(error);
@@ -93,7 +96,6 @@ const getElderHeartRateDetail = asyncHandler(
     try {
       // elder email
       const email = req.query.email;
-
 
       // ==============> GET ELDER ID
       const elder = await prisma.elderProfile.findUnique({
@@ -140,15 +142,6 @@ const appendNotificationLog = asyncHandler(
   }
 );
 
-// @route   PATCH /api/elder/update-heart-threshold
-// @access  Private
-// @payload/header firebase id and token
-const updateElderHeartRateThreshold = asyncHandler(
-  async (req: Request, res: Response) => {
-    res.send("update heart rate threshold...");
-  }
-);
-
 const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
   if (!req.body.email) {
     res.status(400).json({
@@ -185,6 +178,11 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
         medications: req.body.medications ?? null,
         medicalConditions: req.body.medicalConditions ?? null,
         allergies: req.body.allergies ?? null,
+        heartRateThreshold: {
+          minimum: MIN_HEART_RATE,
+          maximum: MAX_HEART_RATE,
+          lastUpdated: null,
+        } as HeartRateThreshold,
       },
     });
 
@@ -227,6 +225,7 @@ const getProfileDetails = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
+//Emergency Contacts
 const addEmergencyContact = asyncHandler(
   async (req: Request, res: Response) => {
     //email is the owner of the profile
@@ -349,11 +348,60 @@ const removeEmergencyContact = asyncHandler(
   }
 );
 
+// @route   PATCH /api/elder/update-heart-threshold
+// @access  Private
+// @payload/header firebase id and token
+const updateElderHeartRateThreshold = asyncHandler(
+  async (req: Request, res: Response) => {
+    res.send("update heart rate threshold...");
+  }
+);
+
+// @route   GET /api/elder/update-heart-threshold
+// @access  Private
+// @payload/header firebase id and token
+const getElderHeartRateThreshold = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.query.email) {
+      res.status(400).json({
+        message: "Missing email",
+      });
+    }
+
+    try {
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: req.query.email as string,
+        },
+      });
+
+      if (!elder) throw new Error("Elder not found");
+
+      res.json({
+        message: "Threshold fetched successfully",
+        detail:
+          elder.heartRateThreshold ??
+          ({
+            minimum: MIN_HEART_RATE,
+            maximum: MAX_HEART_RATE,
+            lastUpdated: null,
+          } as HeartRateThreshold),
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: "Failed to upsert elder profile",
+        detail: error.message,
+      });
+    }
+  }
+);
+
 export {
   setElderHeartRateDetail,
   getElderHeartRateDetail,
   appendNotificationLog,
   updateElderHeartRateThreshold,
+  getElderHeartRateThreshold,
   upsertProfile,
   getProfileDetails,
   addEmergencyContact,
