@@ -54,12 +54,12 @@ model Notification {
 model HeartRateRecord {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
   elderProfile ElderProfile? @relation(fields: [elderProfileId], references: [id])
-  elderProfileId String?
-  currentBpm Int?
-  timestamp DateTime?
-  upTo90Avg Int?
-  upTo90Min Int?
-  upTo90Max Int?
+  elderProfileId String
+  beatsPerMinute Int
+  timestamp DateTime
+  weekAverage Int
+  weekMin Int
+  weekMax Int
 }
 
 //TYPE
