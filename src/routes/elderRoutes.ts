@@ -12,13 +12,14 @@ import express from "express";
 
 const elderRouter = express.Router();
 
-elderRouter.post("/heart-rate-detail/:id", setElderHeartRateDetail);
-elderRouter.get("/heart-rate-detail/:id", getElderHeartRateDetail);
-elderRouter.post("/append-notification-log/:id", appendNotificationLog);
-elderRouter.patch("/update-heart-threshold/:id", updateElderHeartRateThreshold);
-
+// profile routes
 elderRouter.post("/profile", upsertProfile);
 elderRouter.get("/profile", getProfileDetails);
+
+// heart rate details routes
+elderRouter.post("/heart-rate-details", setElderHeartRateDetail);
+// TODO: how long? last 7 days or last 30 days data.
+elderRouter.get("/heart-rate-detail/:id", getElderHeartRateDetail);
 
 //Emergency Contact
 elderRouter.post("/add-emergency-contact", addEmergencyContact);
