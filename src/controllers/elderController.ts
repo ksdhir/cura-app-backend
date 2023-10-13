@@ -18,17 +18,17 @@ const setElderHeartRateDetail = asyncHandler(
       const timestamp = req.body.timestamp;
 
       // ==============> GET ELDER ID
-      const caregiver = await prisma.elderProfile.findUnique({
+      const elder = await prisma.elderProfile.findUnique({
         where: {
           email: email.toString(),
         },
       });
 
-      if (!caregiver || caregiver.id === undefined) {
+      if (!elder || elder.id === undefined) {
         res.status(400).json({ message: "Caregiver profile does not exist" });
       }
 
-      const elderId = caregiver.id;
+      const elderId = elder.id;
 
       // ==============> GET PAST 7 DAYS HEART RATE RECORDS
       // Possibly index the timestamp column
@@ -76,7 +76,7 @@ const setElderHeartRateDetail = asyncHandler(
       if (heartRateRecord) {
         res.status(200).json({ heartRateRecord });
       } else {
-        res.status(400).json({ message: "Caregiver profile does not exist" });
+        res.status(400).json({ message: "Could not append Heart Rate Details" });
       }
     } catch (error) {
       console.log(error);
@@ -90,7 +90,44 @@ const setElderHeartRateDetail = asyncHandler(
 // @payload/header firebase id and token
 const getElderHeartRateDetail = asyncHandler(
   async (req: Request, res: Response) => {
-    res.send("get elder heart rate...");
+    try {
+      // elder email
+      const email = req.query.email;
+
+
+      // ==============> GET ELDER ID
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: email.toString(),
+        },
+      });
+
+      if (!elder || elder.id === undefined) {
+        res.status(400).json({ message: "Elder profile does not exist" });
+      }
+
+      const elderId = elder.id;
+
+      // ==============> GET PAST 7 DAYS HEART RATE RECORDS
+      // Possibly index the timestamp column
+      const heartRateRecords = await prisma.heartRateRecord.findMany({
+        where: {
+          elderProfileId: elderId,
+          timestamp: {
+            gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+      });
+
+      if (heartRateRecords) {
+        res.status(200).json({ heartRateRecords });
+      } else {
+        res.status(400).json({ message: "Heart Rate Details does not exist" });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: "An error occurred" });
+    }
   }
 );
 
