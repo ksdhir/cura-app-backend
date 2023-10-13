@@ -19,7 +19,7 @@ elderRouter.get("/profile", getProfileDetails);
 // heart rate details routes
 elderRouter.post("/heart-rate-details", setElderHeartRateDetail);
 // TODO: how long? last 7 days or last 30 days data.
-elderRouter.get("/heart-rate-detail/:id", getElderHeartRateDetail);
+elderRouter.get("/heart-rate-details", getElderHeartRateDetail);
 
 //Emergency Contact
 elderRouter.post("/add-emergency-contact", addEmergencyContact);
