@@ -4,12 +4,84 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// @route   POST /api/elder/heart-rate-detail
+// Sets the heart rate of Elder person in Heart Rate Log Collection
+// @route   POST /api/elder/heart-rate-details
 // @access  Private
 // @payload/header firebase id and token
 const setElderHeartRateDetail = asyncHandler(
   async (req: Request, res: Response) => {
-    res.send("set elder heart rate...");
+    try {
+      // elder email
+      const email = req.body.email;
+
+      const beatsPerMinute = req.body.beatsPerMinute;
+      const timestamp = req.body.timestamp;
+
+      // ==============> GET ELDER ID
+      const caregiver = await prisma.elderProfile.findUnique({
+        where: {
+          email: email.toString(),
+        },
+      });
+
+      if (!caregiver || caregiver.id === undefined) {
+        res.status(400).json({ message: "Caregiver profile does not exist" });
+      }
+
+      const elderId = caregiver.id;
+
+      // ==============> GET PAST 7 DAYS HEART RATE RECORDS
+      // Possibly index the timestamp column
+      const heartRateRecords = await prisma.heartRateRecord.findMany({
+        where: {
+          elderProfileId: elderId,
+          timestamp: {
+            gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+      });
+
+      // compute average, max, min
+
+      let weekAverage = req.body.beatsPerMinute;
+      let weekMax = req.body.beatsPerMinute;
+      let weekMin = req.body.beatsPerMinute;
+
+      if (heartRateRecords) {
+        weekAverage =
+          heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, 0) /
+          heartRateRecords.length;
+        weekMax = heartRateRecords.reduce(
+          (acc, curr) => Math.max(acc, curr.beatsPerMinute),
+          req.body.beatsPerMinute
+        );
+        weekMin = heartRateRecords.reduce(
+          (acc, curr) => Math.min(acc, curr.beatsPerMinute),
+          req.body.beatsPerMinute
+        );
+      }
+
+      // ==============> SET HEART RATE Record
+      const heartRateRecord = await prisma.heartRateRecord.create({
+        data: {
+          elderProfileId: elderId,
+          beatsPerMinute: beatsPerMinute,
+          timestamp: timestamp,
+          weekAverage: weekAverage,
+          weekMax: weekMax,
+          weekMin: weekMin,
+        },
+      });
+
+      if (heartRateRecord) {
+        res.status(200).json({ heartRateRecord });
+      } else {
+        res.status(400).json({ message: "Caregiver profile does not exist" });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: "An error occurred" });
+    }
   }
 );
 
