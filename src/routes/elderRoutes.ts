@@ -3,6 +3,7 @@ import {
   appendNotificationLog,
   getElderHeartRateDetail,
   getProfileDetails,
+  removeEmergencyContact,
   setElderHeartRateDetail,
   updateElderHeartRateThreshold,
   upsertProfile,
@@ -21,5 +22,6 @@ elderRouter.get("/profile", getProfileDetails);
 
 //Emergency Contact
 elderRouter.post("/add-emergency-contact", addEmergencyContact);
+elderRouter.post("/remove-emergency-contact", removeEmergencyContact);
 
 export default elderRouter;

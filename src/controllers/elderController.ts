@@ -184,6 +184,62 @@ const addEmergencyContact = asyncHandler(
   }
 );
 
+const removeEmergencyContact = asyncHandler(
+  async (req: Request, res: Response) => {
+    //email is the owner of the profile
+    //contactEmail is the email of the caregiver to be added as emergency contact
+    //email and contactEmail must be different
+    if (
+      !req.body.email ||
+      !req.body.contactEmail ||
+      req.body.email === req.body.contactEmail
+    ) {
+      res.status(400).json({
+        message: "Invalid Request",
+      });
+    }
+
+    try {
+      //Check if the elder exists
+      //Check if the caregiver is already an emergency contact
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: req.body.email as string,
+          emergencyContactRelationships: {
+            some: {
+              email: req.body.contactEmail as string,
+            },
+          },
+        },
+      });
+
+      if (!elder) throw new Error("Caregiver is not in the emergency contact");
+
+      await prisma.elderProfile.update({
+        where: {
+          email: req.body.email as string,
+        },
+        data: {
+          emergencyContactRelationships: {
+            set: elder.emergencyContactRelationships.filter(
+              (person) => person.email !== req.body.contactEmail
+            ),
+          },
+        },
+      });
+
+      res.status(400).json({
+        message: "Successfully removed an emergency contact",
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: "Failed to remove emergency contact",
+        detail: error.message,
+      });
+    }
+  }
+);
+
 export {
   setElderHeartRateDetail,
   getElderHeartRateDetail,
@@ -192,4 +248,5 @@ export {
   upsertProfile,
   getProfileDetails,
   addEmergencyContact,
+  removeEmergencyContact,
 };
