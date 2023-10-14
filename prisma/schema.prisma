@@ -12,11 +12,11 @@ datasource db {
 
 model ElderProfile {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-  name String?
-  preferredName String?
-  age Int?
+  name String
+  preferredName String
+  age Int
   email String @unique
-  phoneNumber String?
+  phoneNumber String
   sex SexEnum? @default(PREFER_NOT_TO_SAY)
   medicalConditions String?
   medications String?
@@ -25,10 +25,11 @@ model ElderProfile {
   notes String?
   heartRateRecords HeartRateRecord[]
   defaultLocation String[]
-  emergencyContacts CareGiverProfile? @relation(fields: [careGiverIds], references: [id])
-  careGiverIds String[]  @db.ObjectId
   emergencyContactRelationships EmergencyContactRelationship[]
   heartRateThreshold HeartRateThreshold?
+  // caregiver connection
+  careGiverIds String[]  @db.ObjectId
+  caregiversDoc CareGiverProfile[] @relation(fields: [careGiverIds], references: [id])
 }
 
 model CareGiverProfile {
@@ -39,7 +40,9 @@ model CareGiverProfile {
   phoneNumber String?
   notifications Notification[]
   requestToken String? 
-  elders ElderProfile[]
+  // elder connection
+  elderIds String[]  @db.ObjectId
+  eldersDoc ElderProfile[] @relation(fields: [elderIds], references: [id])
 }
 
 model Notification {
@@ -49,7 +52,7 @@ model Notification {
   type NotificationType? @default(OTHERS)
   actionType NotificationActionType @default(NO_ACTION)
   careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
-  careGiverProfileId String?
+  careGiverProfileId String
 }
 
 model HeartRateRecord {
