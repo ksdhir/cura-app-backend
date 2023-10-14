@@ -1,7 +1,10 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { HeartRateThreshold, PrismaClient } from "@prisma/client";
-import { MIN_HEART_RATE, MAX_HEART_RATE } from "../constants";
+import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
+
+// get recommended heart rate threshold based on age
+import getHeartRateThreshold from "../util/getHeartRateThreshold";
 
 const prisma = new PrismaClient();
 
@@ -149,16 +152,29 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
+  if (!req.body.age) {
+    res.status(400).json({
+      message: "Missing Age",
+    });
+  }
+
   try {
+
+    // calculate the minimum and maximum heart rate depending on the age
+
+    const age = req.body.age;
+    const threshold = getHeartRateThreshold(age);
+
     const elder = await prisma.elderProfile.upsert({
       where: {
         email: req.body.email,
       },
       update: {
         name: req.body.name,
-        preferredName: req.body.preferredName,
+        preferredName: req.body.preferredName ?? req.body.name,
         phoneNumber: req.body.phoneNumber,
         age: req.body.age,
+        defaultLocation: req.body.defaultLocation,
         sex: req.body.sex ?? "PREFER_NOT_TO_SAY",
         bloodType: req.body.bloodType ?? null,
         notes: req.body.notes ?? null,
@@ -168,10 +184,11 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
       },
       create: {
         email: req.body.email,
-        name: req.body.name ?? null,
-        preferredName: req.body.preferredName ?? null,
-        phoneNumber: req.body.phoneNumber ?? null,
-        age: req.body.age ?? null,
+        name: req.body.name,
+        preferredName: req.body.preferredName ?? req.body.name,
+        phoneNumber: req.body.phoneNumber,
+        age: req.body.age,
+        defaultLocation: req.body.defaultLocation,
         sex: req.body.sex ?? "PREFER_NOT_TO_SAY",
         bloodType: req.body.bloodType ?? null,
         notes: req.body.notes ?? null,
@@ -179,18 +196,18 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
         medicalConditions: req.body.medicalConditions ?? null,
         allergies: req.body.allergies ?? null,
         heartRateThreshold: {
-          minimum: MIN_HEART_RATE,
-          maximum: MAX_HEART_RATE,
-        } as HeartRateThreshold,
+          minimum: threshold.min,
+          maximum: threshold.max,
+        },
       },
     });
 
     res.json({
       message: "Successfully upsert caregiver profile",
-      profile: elder,
-      body: req.body,
+      profile: elder
     });
   } catch (error) {
+    console.log(error)
     res.status(400).json({
       message: "Failed to upsert elder profile",
       detail: error.message,
@@ -234,7 +251,8 @@ const addEmergencyContact = asyncHandler(
     if (
       !req.body.email ||
       !req.body.contactEmail ||
-      req.body.email === req.body.contactEmail
+      req.body.email === req.body.contactEmail,
+      !req.body.relationship
     ) {
       res.status(400).json({
         message: "Invalid Request",
@@ -242,7 +260,7 @@ const addEmergencyContact = asyncHandler(
     }
 
     try {
-      //Check if the caregiver exists
+      // ==================> VALIDATION: Check if the Caregiver Profile exists
       const caregiver = await prisma.careGiverProfile.findUnique({
         where: {
           email: req.body.contactEmail as string,
@@ -250,6 +268,13 @@ const addEmergencyContact = asyncHandler(
       });
 
       if (!caregiver) throw new Error("Caregiver not found");
+
+      res.status(200).json({
+        caregiver
+      });
+      
+
+      return;
 
       //Check if the elder exists
       //Check if the caregiver is already an emergency contact
@@ -266,6 +291,9 @@ const addEmergencyContact = asyncHandler(
 
       if (elder) throw new Error("Caregiver is already an emergency contact");
 
+
+
+
       await prisma.elderProfile.update({
         where: {
           email: req.body.email as string,
@@ -280,7 +308,7 @@ const addEmergencyContact = asyncHandler(
         },
       });
 
-      res.status(400).json({
+      res.status(200).json({
         message: "Successfully added an emergency contact",
       });
     } catch (error) {
@@ -393,7 +421,7 @@ const updateElderHeartRateThreshold = asyncHandler(
   }
 );
 
-// @route   GET /api/elder/update-heart-threshold
+// @route   GET /api/elder/heart-threshold
 // @access  Private
 // @payload/header firebase id and token
 const getElderHeartRateThreshold = asyncHandler(
@@ -416,12 +444,7 @@ const getElderHeartRateThreshold = asyncHandler(
       res.json({
         message: "Threshold fetched successfully",
         detail:
-          elder.heartRateThreshold ??
-          ({
-            minimum: MIN_HEART_RATE,
-            maximum: MAX_HEART_RATE,
-            lastUpdated: null,
-          } as HeartRateThreshold),
+          elder.heartRateThreshold,
       });
     } catch (error) {
       res.status(400).json({
