@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
-import { HeartRateThreshold, PrismaClient } from "@prisma/client";
+import { HeartRateThreshold, PrismaClient, Prisma } from "@prisma/client";
 import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
 
 // get recommended heart rate threshold based on age
@@ -159,7 +159,6 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   try {
-
     // calculate the minimum and maximum heart rate depending on the age
 
     const age = req.body.age;
@@ -199,15 +198,16 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
           minimum: threshold.min,
           maximum: threshold.max,
         },
+        careGiverRelationships: {},
       },
     });
 
     res.json({
       message: "Successfully upsert caregiver profile",
-      profile: elder
+      profile: elder,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(400).json({
       message: "Failed to upsert elder profile",
       detail: error.message,
@@ -242,20 +242,24 @@ const getProfileDetails = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-//Emergency Contacts
+// @route   POST /api/elder/add-emergency-contact
+// @access  Private
+// @payload/header firebase id and token
+
 const addEmergencyContact = asyncHandler(
   async (req: Request, res: Response) => {
     //email is the owner of the profile
     //contactEmail is the email of the caregiver to be added as emergency contact
     //email and contactEmail must be different
     if (
-      !req.body.email ||
-      !req.body.contactEmail ||
-      req.body.email === req.body.contactEmail,
-      !req.body.relationship
+      (!req.body.email ||
+        !req.body.contactEmail ||
+        req.body.email === req.body.contactEmail,
+      !req.body.relationship)
     ) {
       res.status(400).json({
-        message: "Invalid Request",
+        message:
+          "Invalid Request: missing some either of params: email, contactEmail, relationship",
       });
     }
 
@@ -269,49 +273,67 @@ const addEmergencyContact = asyncHandler(
 
       if (!caregiver) throw new Error("Caregiver not found");
 
-      res.status(200).json({
-        caregiver
-      });
-      
-
-      return;
-
-      //Check if the elder exists
-      //Check if the caregiver is already an emergency contact
-      const elder = await prisma.elderProfile.findUnique({
+      // Validation: Check if the elder profile exists
+      const elderProfile = await prisma.elderProfile.findUnique({
         where: {
           email: req.body.email as string,
-          emergencyContactRelationships: {
-            some: {
-              email: req.body.contactEmail as string,
-            },
-          },
         },
       });
 
-      if (elder) throw new Error("Caregiver is already an emergency contact");
+      if (!elderProfile) throw new Error("Elder not found");
 
+      // res.status(200).json({
+      //   elderProfile
+      // })
 
+      // Add Elder Id and Caregiver id to each document
 
+      // add elderId to caregiver profile
+      const elderIds = caregiver.elderIds ?? [];
+      if (!elderIds.includes(elderProfile.id)) {
+        elderIds.push(elderProfile.id);
+      }
 
-      await prisma.elderProfile.update({
+      const updatedCaregiver = await prisma.careGiverProfile.update({
+        where: {
+          email: req.body.contactEmail as string,
+        },
+        data: {
+          elderIds: elderIds,
+        },
+      });
+
+      if (!updatedCaregiver)
+        throw new Error("Failed to update caregiver profile");
+
+      // add caregiverId to elder profile
+      const caregiverIds = elderProfile.careGiverIds ?? [];
+      if (!caregiverIds.includes(caregiver.id)) {
+        caregiverIds.push(caregiver.id);
+      }
+
+      const careGiverRelationships =
+        (elderProfile.careGiverRelationships as Prisma.JsonObject) ?? {} as Prisma.JsonObject;
+      careGiverRelationships[updatedCaregiver?.email] = req.body.relationship;
+
+      const updatedElderProfile = await prisma.elderProfile.update({
         where: {
           email: req.body.email as string,
         },
         data: {
-          emergencyContactRelationships: {
-            push: {
-              email: req.body.contactEmail as string,
-              relationship: req.body.relationship ?? null,
-            },
-          },
+          careGiverIds: caregiverIds,
+          careGiverRelationships: careGiverRelationships,
         },
       });
 
+      if (!updatedElderProfile || !updatedCaregiver)
+        throw new Error("Failed to update elder profile and caregiver profile");
+
       res.status(200).json({
-        message: "Successfully added an emergency contact",
+        careGiverRelationships: updatedElderProfile.careGiverRelationships,
       });
     } catch (error) {
+      console.log(error)
       res.status(400).json({
         message: "Failed to add emergency contact",
         detail: error.message,
@@ -340,33 +362,61 @@ const removeEmergencyContact = asyncHandler(
       //Check if the caregiver is already an emergency contact
       const elder = await prisma.elderProfile.findUnique({
         where: {
-          email: req.body.email as string,
-          emergencyContactRelationships: {
-            some: {
-              email: req.body.contactEmail as string,
-            },
-          },
+          email: req.body.email as string
         },
       });
 
-      if (!elder) throw new Error("Caregiver is not in the emergency contact");
+      const caregiver = await prisma.careGiverProfile.findUnique({
+        where: {
+          email: req.body.contactEmail as string,
+        }
+      });
 
-      await prisma.elderProfile.update({
+      if (!elder) throw new Error("Elder does not exist");
+
+      // remove from elder profile
+      // remove relationship as well
+      const careGiverRelationships = elder.careGiverRelationships as Prisma.JsonObject;
+      delete careGiverRelationships[req.body.contactEmail as string];
+
+      const newCareGiverIds = elder.careGiverIds.filter(caregiverId => {
+        return caregiverId !== caregiver.id
+      });
+
+      const updatedElder = await prisma.elderProfile.update({
         where: {
           email: req.body.email as string,
         },
         data: {
-          emergencyContactRelationships: {
-            set: elder.emergencyContactRelationships.filter(
-              (person) => person.email !== req.body.contactEmail
-            ),
-          },
+          careGiverRelationships,
+          careGiverIds: newCareGiverIds,
+
         },
       });
 
-      res.status(400).json({
-        message: "Successfully removed an emergency contact",
+      // remove elderId from caregiver profile
+      const newElderIds = caregiver.elderIds.filter(elderId => {
+        return elderId !== elder.id
       });
+
+
+      const updatedCaregiver = await prisma.careGiverProfile.update({
+        where: {
+          email: req.body.contactEmail as string,
+        },
+        data: {
+          elderIds: newElderIds,
+        },
+      });
+
+      if (!updatedElder || !updatedCaregiver) throw new Error("Failed to remove emergency contact");
+
+      res.status(200).json({
+        message: "Successfully removed an emergency contact",
+        newCareGiverIds,
+        newElderIds
+      });
+
     } catch (error) {
       res.status(400).json({
         message: "Failed to remove emergency contact",
@@ -443,8 +493,7 @@ const getElderHeartRateThreshold = asyncHandler(
 
       res.json({
         message: "Threshold fetched successfully",
-        detail:
-          elder.heartRateThreshold,
+        detail: elder.heartRateThreshold,
       });
     } catch (error) {
       res.status(400).json({
