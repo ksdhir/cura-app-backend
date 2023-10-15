@@ -24,6 +24,7 @@ model ElderProfile {
   allergies String?
   notes String?
   heartRateRecords HeartRateRecord[]
+  notifications Notification[]
   defaultLocation String[]
   emergencyContactRelationships EmergencyContactRelationship[]
   heartRateThreshold HeartRateThreshold?
@@ -39,7 +40,7 @@ model CareGiverProfile {
   preferredName String?
   email String @unique
   phoneNumber String?
-  notifications Notification[]
+  //notifications Notification[]
   requestToken String? 
   // elder connection
   elderIds String[]  @db.ObjectId
@@ -48,18 +49,26 @@ model CareGiverProfile {
 
 model Notification {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
-  elderProfileId String?
-  timestamp DateTime?
-  type NotificationType? @default(OTHERS)
-  actionType NotificationActionType @default(NO_ACTION)
-  careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
-  careGiverProfileId String
+  // elderProfileId String @map ("elderProfileId_idx")
+  // elderProfileEmail String @map("elderProfileEmail_idx")
+  timestamp DateTime @default(now())
+  type NotificationType
+  location String[]
+
+  // careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
+  // careGiverProfileId String @db.ObjectId
+
+  elderProfile ElderProfile @relation(fields: [elderProfileId], references: [id])
+  elderProfileId String @db.ObjectId
+
+  @@index([elderProfileId, type], name: "elderProfileId_type_idx")
+  @@index([timestamp], name: "timestamp_idx")
 }
 
 model HeartRateRecord {
   id  String  @id @default(auto()) @map("_id") @db.ObjectId
   elderProfile ElderProfile? @relation(fields: [elderProfileId], references: [id])
-  elderProfileId String
+  elderProfileId String @db.ObjectId
   beatsPerMinute Int
   timestamp DateTime
   weekAverage Int
@@ -81,20 +90,11 @@ type HeartRateThreshold {
 
 //ENUMS
 enum NotificationType {
-  MOVEMENT
-  FALL
+  MOVEMENT_LOCATION
+  FALL_DETECTED
   CRITICAL_HEART_RATE
-  CONNECTION_REQUEST
-  OTHERS
 }
 
-enum NotificationActionType {
-  ACCEPT
-  REJECT
-  NO_ACTION
-  PENDING
-  OTHERS
-}
 
 enum SexEnum {
   MALE
