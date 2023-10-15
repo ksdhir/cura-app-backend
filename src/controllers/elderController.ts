@@ -136,12 +136,49 @@ const getElderHeartRateDetail = asyncHandler(
   }
 );
 
-// @route   POST /api/elder/append-notification-log
+// @route   POST /api/elder/append-notification-record
 // @access  Private
 // @payload/header firebase id and token
-const appendNotificationLog = asyncHandler(
+const appendNotificationRecord = asyncHandler(
   async (req: Request, res: Response) => {
-    res.send("appending notificaiton...");
+    try {
+      const email = req.body.email;
+      const type = req.body.type;
+      // MOVEMENT_LOCATION
+      // FALL_DETECTED
+      // CRITICAL_HEART_RATE
+      const location = req.body.location;
+
+      // validate if elder exists in the database
+
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: email.toString(),
+        },
+      });
+
+      const elderId = elder.id as string;
+
+      // append notification record in the database
+      const notificationRecord = await prisma.notification.create({
+        data: {
+          elderProfileId: elderId,
+          type: type,
+          location: location,
+        },
+      });
+
+      if (notificationRecord) {
+        res.status(200).json({ notificationRecord });
+      } else {
+        throw Error("Could not append Notification Record");
+      }
+    } catch (error) {
+      res.status(400).json({
+        message: "Could not append Notification Record",
+        detail: error.message,
+      });
+    }
   }
 );
 
@@ -313,7 +350,8 @@ const addEmergencyContact = asyncHandler(
       }
 
       const careGiverRelationships =
-        (elderProfile.careGiverRelationships as Prisma.JsonObject) ?? {} as Prisma.JsonObject;
+        (elderProfile.careGiverRelationships as Prisma.JsonObject) ??
+        ({} as Prisma.JsonObject);
       careGiverRelationships[updatedCaregiver?.email] = req.body.relationship;
 
       const updatedElderProfile = await prisma.elderProfile.update({
@@ -333,7 +371,7 @@ const addEmergencyContact = asyncHandler(
         careGiverRelationships: updatedElderProfile.careGiverRelationships,
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       res.status(400).json({
         message: "Failed to add emergency contact",
         detail: error.message,
@@ -362,25 +400,26 @@ const removeEmergencyContact = asyncHandler(
       //Check if the caregiver is already an emergency contact
       const elder = await prisma.elderProfile.findUnique({
         where: {
-          email: req.body.email as string
+          email: req.body.email as string,
         },
       });
 
       const caregiver = await prisma.careGiverProfile.findUnique({
         where: {
           email: req.body.contactEmail as string,
-        }
+        },
       });
 
       if (!elder) throw new Error("Elder does not exist");
 
       // remove from elder profile
       // remove relationship as well
-      const careGiverRelationships = elder.careGiverRelationships as Prisma.JsonObject;
+      const careGiverRelationships =
+        elder.careGiverRelationships as Prisma.JsonObject;
       delete careGiverRelationships[req.body.contactEmail as string];
 
-      const newCareGiverIds = elder.careGiverIds.filter(caregiverId => {
-        return caregiverId !== caregiver.id
+      const newCareGiverIds = elder.careGiverIds.filter((caregiverId) => {
+        return caregiverId !== caregiver.id;
       });
 
       const updatedElder = await prisma.elderProfile.update({
@@ -390,15 +429,13 @@ const removeEmergencyContact = asyncHandler(
         data: {
           careGiverRelationships,
           careGiverIds: newCareGiverIds,
-
         },
       });
 
       // remove elderId from caregiver profile
-      const newElderIds = caregiver.elderIds.filter(elderId => {
-        return elderId !== elder.id
+      const newElderIds = caregiver.elderIds.filter((elderId) => {
+        return elderId !== elder.id;
       });
-
 
       const updatedCaregiver = await prisma.careGiverProfile.update({
         where: {
@@ -409,14 +446,14 @@ const removeEmergencyContact = asyncHandler(
         },
       });
 
-      if (!updatedElder || !updatedCaregiver) throw new Error("Failed to remove emergency contact");
+      if (!updatedElder || !updatedCaregiver)
+        throw new Error("Failed to remove emergency contact");
 
       res.status(200).json({
         message: "Successfully removed an emergency contact",
         newCareGiverIds,
-        newElderIds
+        newElderIds,
       });
-
     } catch (error) {
       res.status(400).json({
         message: "Failed to remove emergency contact",
@@ -507,7 +544,7 @@ const getElderHeartRateThreshold = asyncHandler(
 export {
   setElderHeartRateDetail,
   getElderHeartRateDetail,
-  appendNotificationLog,
+  appendNotificationRecord,
   updateElderHeartRateThreshold,
   getElderHeartRateThreshold,
   upsertProfile,

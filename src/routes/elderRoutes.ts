@@ -1,6 +1,6 @@
 import {
   addEmergencyContact,
-  appendNotificationLog,
+  appendNotificationRecord,
   getElderHeartRateDetail,
   getElderHeartRateThreshold,
   getProfileDetails,
@@ -13,8 +13,7 @@ import express from "express";
 
 const elderRouter = express.Router();
 
-elderRouter.post("/append-notification-log/:id", appendNotificationLog);
-
+// profile routes
 elderRouter.post("/profile", upsertProfile);
 elderRouter.get("/profile", getProfileDetails);
 
@@ -30,5 +29,8 @@ elderRouter.post("/remove-emergency-contact", removeEmergencyContact);
 //Heart Rate Threshold
 elderRouter.patch("/heart-threshold", updateElderHeartRateThreshold);
 elderRouter.get("/heart-threshold", getElderHeartRateThreshold);
+
+//Notification Log
+elderRouter.post("/append-notification-record", appendNotificationRecord);
 
 export default elderRouter;
