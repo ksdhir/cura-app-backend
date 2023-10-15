@@ -30,6 +30,7 @@ model ElderProfile {
   // caregiver connection
   careGiverIds String[]  @db.ObjectId
   caregiversDoc CareGiverProfile[] @relation(fields: [careGiverIds], references: [id])
+  careGiverRelationships Json?
 }
 
 model CareGiverProfile {
