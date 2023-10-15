@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, NotificationType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -70,4 +70,49 @@ const caregiverProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-export { caregiverProfileCreation, caregiverProfile };
+
+// @route   GET /api/caregiver/all-notification-log
+// @access  Authenticated
+const caregiverNotificationLog = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const elderEmail = req.query.elderEmail;
+    const type = req.query.type;
+    
+    // validation if elder exists
+    const elder = await prisma.elderProfile.findUnique({
+      where: {
+        email: elderEmail.toString(),
+      },
+    });
+
+    if (!elder) {
+      throw Error("Elder does not exists")
+    }
+
+    const elderId = elder.id;
+
+    const notificationLog = await prisma.notification.findMany({
+      where: {
+        elderProfileId: elderId,
+        type: type as NotificationType
+      },
+      orderBy: {
+        timestamp: 'desc'
+      }
+    });
+
+
+    if (notificationLog) {
+      res.status(200).json({ notificationLog });
+    } else {
+      throw Error("No notification log found")
+    }
+  } catch (error) {
+    res.status(400).json({ errorx: "An error occurred", error: error });
+  }
+});
+
+
+
+
+export { caregiverProfileCreation, caregiverProfile, caregiverNotificationLog };
