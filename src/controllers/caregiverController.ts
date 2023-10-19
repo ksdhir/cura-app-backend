@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { PrismaClient, NotificationType } from "@prisma/client";
+import admin from "firebase-admin";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,18 @@ const prisma = new PrismaClient();
 const caregiverProfileCreation = asyncHandler(
   async (req: Request, res: Response) => {
     try {
+      const user = await admin.auth().getUserByEmail(req.body.email);
+
+      if (!user) {
+        throw Error("User does not exist");
+      }
+
+      if (!(user.customClaims && user.customClaims.profileType)) {
+        admin.auth().setCustomUserClaims(user.uid, {
+          profileType: "Caregiver",
+        });
+      }
+
       const caregiver = await prisma.careGiverProfile.upsert({
         where: {
           email: req.body.email,
@@ -70,49 +83,46 @@ const caregiverProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-
 // @route   GET /api/caregiver/all-notification-log
 // @access  Authenticated
-const caregiverNotificationLog = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const elderEmail = req.query.elderEmail;
-    const type = req.query.type;
-    
-    // validation if elder exists
-    const elder = await prisma.elderProfile.findUnique({
-      where: {
-        email: elderEmail.toString(),
-      },
-    });
+const caregiverNotificationLog = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      const elderEmail = req.query.elderEmail;
+      const type = req.query.type;
 
-    if (!elder) {
-      throw Error("Elder does not exists")
-    }
+      // validation if elder exists
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: elderEmail.toString(),
+        },
+      });
 
-    const elderId = elder.id;
-
-    const notificationLog = await prisma.notification.findMany({
-      where: {
-        elderProfileId: elderId,
-        type: type as NotificationType
-      },
-      orderBy: {
-        timestamp: 'desc'
+      if (!elder) {
+        throw Error("Elder does not exists");
       }
-    });
 
+      const elderId = elder.id;
 
-    if (notificationLog) {
-      res.status(200).json({ notificationLog });
-    } else {
-      throw Error("No notification log found")
+      const notificationLog = await prisma.notification.findMany({
+        where: {
+          elderProfileId: elderId,
+          type: type as NotificationType,
+        },
+        orderBy: {
+          timestamp: "desc",
+        },
+      });
+
+      if (notificationLog) {
+        res.status(200).json({ notificationLog });
+      } else {
+        throw Error("No notification log found");
+      }
+    } catch (error) {
+      res.status(400).json({ errorx: "An error occurred", error: error });
     }
-  } catch (error) {
-    res.status(400).json({ errorx: "An error occurred", error: error });
   }
-});
-
-
-
+);
 
 export { caregiverProfileCreation, caregiverProfile, caregiverNotificationLog };

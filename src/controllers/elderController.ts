@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { HeartRateThreshold, PrismaClient, Prisma } from "@prisma/client";
 import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
-
+import admin from "firebase-admin";
 // get recommended heart rate threshold based on age
 import getHeartRateThreshold from "../util/getHeartRateThreshold";
 
@@ -196,8 +196,19 @@ const upsertProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   try {
-    // calculate the minimum and maximum heart rate depending on the age
+    const user = await admin.auth().getUserByEmail(req.body.email);
 
+    if (!user) {
+      throw Error("User does not exist");
+    }
+
+    if (!(user.customClaims && user.customClaims.profileType)) {
+      admin.auth().setCustomUserClaims(user.uid, {
+        profileType: "Elder",
+      });
+    }
+
+    // calculate the minimum and maximum heart rate depending on the age
     const age = req.body.age;
     const threshold = getHeartRateThreshold(age);
 
