@@ -7,7 +7,8 @@ const expo = new Expo();
 const sendPushNotification = async (
   pushTokens: string[],
   title: string,
-  body: string
+  body: string,
+  data: object = {}
 ) => {
   // validate pushTokens
   if (pushTokens.length === 0) {
@@ -15,7 +16,7 @@ const sendPushNotification = async (
   }
 
   // get messages
-  const messages = prepareMessages(pushTokens, title, body);
+  const messages = prepareMessages(pushTokens, title, body, data);
 
   let chunks = expo.chunkPushNotifications(messages);
 
@@ -30,7 +31,7 @@ const sendPushNotification = async (
 
 };
 
-function prepareMessages(pushTokens: string[], title: string, body: string) {
+function prepareMessages(pushTokens: string[], title: string, body: string, data: object) {
   // Create the messages that you want to send to clients
   let messages = [];
   for (let pushToken of pushTokens) {
@@ -48,7 +49,7 @@ function prepareMessages(pushTokens: string[], title: string, body: string) {
       // sound: "default",
       title: title,
       body: body,
-      data: { sample_key: "sample_property" },
+      data: { ...data, sample_key: "sample_property" },
     });
   }
 
