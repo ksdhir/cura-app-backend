@@ -27,9 +27,7 @@ const app = express();
 
 // CORS configuration
 app.use(
-  cors({
-    credentials: true,
-  })
+  cors()
 );
 
 // Express configuration
