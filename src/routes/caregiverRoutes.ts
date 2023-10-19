@@ -2,7 +2,8 @@ import express from "express";
 import {
   caregiverProfile,
   caregiverProfileCreation,
-  caregiverNotificationLog
+  caregiverNotificationLog,
+  storePushNotificationToken
 } from "../controllers/caregiverController";
 
 // middleware firebase auth
@@ -23,6 +24,6 @@ caregiverRouter.get("/profile", caregiverProfile);
 caregiverRouter.get("/all-notification-log", caregiverNotificationLog);
 // Get latest notification record by type and elder
 
-
+caregiverRouter.get("/store-push-notification-token", storePushNotificationToken);
 
 export default caregiverRouter;
