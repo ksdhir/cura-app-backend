@@ -114,5 +114,36 @@ const caregiverNotificationLog = asyncHandler(async (req: Request, res: Response
 
 
 
+// @route   GET /api/caregiver/store-push-notification-token 
+// @access  Authenticated
+const storePushNotificationToken = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const email = req.query.email;
+    const token = req.query.token;
 
-export { caregiverProfileCreation, caregiverProfile, caregiverNotificationLog };
+    if (!email || !token) {
+      throw new Error("Email or token is missing")
+    }
+
+    const caregiver = await prisma.careGiverProfile.update({
+      where: {
+        email: email.toString(),
+      },
+      data: {
+        requestToken: token.toString()
+      }
+    });
+
+    if (caregiver) {
+      res.status(200).json({ message: "Push notification token stored successfully" });
+    } else {
+      res.status(400).json({ message: "Failed to store push notification token" });
+    }
+  } catch (error) {
+    res.status(406).json({ errorx: "An error occurred", error: error });
+  }
+});
+
+
+
+export { caregiverProfileCreation, caregiverProfile, caregiverNotificationLog, storePushNotificationToken };

@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { HeartRateThreshold, PrismaClient, Prisma } from "@prisma/client";
 import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
+import sendPushNotification from "../util/sendPushNotification";
 
 // get recommended heart rate threshold based on age
 import getHeartRateThreshold from "../util/getHeartRateThreshold";
@@ -144,20 +145,62 @@ const appendNotificationRecord = asyncHandler(
     try {
       const email = req.body.email;
       const type = req.body.type;
+
+      if (
+        type !== "MOVEMENT_LOCATION" &&
+        type !== "FALL_DETECTED" &&
+        type !== "CRITICAL_HEART_RATE" &&
+        type !== "TEST_NOTIFICATION"
+      ) {
+        throw Error("Invalid notification type");
+      }
+
       // MOVEMENT_LOCATION
       // FALL_DETECTED
       // CRITICAL_HEART_RATE
       const location = req.body.location;
 
-      // validate if elder exists in the database
-
+      // validate elder first and get his caregiver notification tokens
       const elder = await prisma.elderProfile.findUnique({
         where: {
           email: email.toString(),
         },
+        include: {
+          caregiversDoc: true,
+        },
       });
 
       const elderId = elder.id as string;
+
+      // validation
+      if (!elder || !elderId) {
+        throw Error("Elder does not exists");
+      }
+
+      // ===============================> TEST NOTIFICATION STARTS
+      if (type === "TEST_NOTIFICATION") {
+        const careGiverTokens = elder.caregiversDoc
+          .map((caregiver) => {
+            return caregiver.requestToken;
+          })
+          .filter((token) => {
+            return token !== "" && token !== null && token !== undefined;
+          });
+
+        // test notification and return
+        sendPushNotification(
+          careGiverTokens,
+          "Test CURA Notification",
+          "This is a test notification"
+        );
+
+        res
+          .status(200)
+          .json({ message: "Test notification sent", careGiverTokens });
+        return;
+      }
+
+      // ===============================> TEST NOTIFICATION ENDS
 
       // append notification record in the database
       const notificationRecord = await prisma.notification.create({
@@ -167,6 +210,41 @@ const appendNotificationRecord = asyncHandler(
           location: location,
         },
       });
+
+      // ====================> SEND ELDER NOTIFICATION
+      const careGiverTokens = elder.caregiversDoc
+        .map((caregiver) => {
+          return caregiver.requestToken;
+        })
+        .filter((token) => {
+          return token !== "" && token !== null && token !== undefined;
+        });
+
+      
+      // ======================================> Different Kinds of Notifications
+      if (type === "CRITICAL_HEART_RATE") {
+        sendPushNotification(
+          careGiverTokens,
+          "Elder Critical Heart Rate Detected",
+          "Your elder has a critical heart rate. Click to view more.",
+          { location }
+        );
+      } else if (type == "FALL_DETECTED") {
+        sendPushNotification(
+          careGiverTokens,
+          "Elder Fall Detected",
+          "Your elder might have fell down. Contact and connect now.",
+          { location }
+        );
+      } else if (type == "MOVEMENT_LOCATION") {
+        sendPushNotification(
+          careGiverTokens,
+          "Elder Far from Home",
+          "Your elder seems to be far from Home. Click to view current location.",
+          { location }
+        );
+      }
+      // ======================================> Different Kinds of Notifications END
 
       if (notificationRecord) {
         res.status(200).json({ notificationRecord });
