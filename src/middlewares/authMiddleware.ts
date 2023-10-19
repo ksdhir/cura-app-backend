@@ -16,7 +16,9 @@ const authTokenVerifyMiddleware = async (
   const tokenString = req.headers["authorization"]?.split(" ") ?? null;
 
   if (!tokenString || !tokenString[1]) {
-    res.status(401).send("You are not authorized.");
+    res.status(401).json({
+      message: "You are not authorized.",
+    });
     return;
   }
 
@@ -26,7 +28,9 @@ const authTokenVerifyMiddleware = async (
 
     next();
   } catch (error) {
-    res.status(401).send("You are not authorized.");
+    res.status(401).json({
+      message: "You are not authorized.",
+    });
     return;
   }
 };
