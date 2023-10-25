@@ -67,14 +67,21 @@ const caregiverProfile = asyncHandler(async (req: Request, res: Response) => {
       where: {
         email: email.toString(),
       },
+      include: {
+        eldersDoc: true,
+      },
     });
 
+    const elderEmails = caregiver.eldersDoc.map((elder) => elder.email);
+
     // remove unwanted params
+    delete caregiver?.eldersDoc;
+    delete caregiver?.elderIds;
     delete caregiver?.id;
     delete caregiver?.requestToken;
 
     if (caregiver) {
-      res.status(200).json({ caregiver });
+      res.status(200).json({ caregiver: {...caregiver, 'elderEmails': elderEmails} });
     } else {
       res.status(400).json({ message: "Caregiver profile does not exist" });
     }
