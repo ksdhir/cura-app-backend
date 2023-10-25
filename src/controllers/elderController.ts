@@ -19,9 +19,13 @@ const setElderHeartRateDetail = asyncHandler(
     try {
       // elder email
       const email = req.body.email;
-
-      const beatsPerMinute = req.body.beatsPerMinute;
+      const beatsPerMinute = Number(req.body.beatsPerMinute);
       const timestamp = req.body.timestamp;
+
+
+      if (!email || !beatsPerMinute || !timestamp || beatsPerMinute == 0) {
+        throw Error("Invalid Parameters");
+      }
 
       // ==============> GET ELDER ID
       const elder = await prisma.elderProfile.findUnique({
@@ -55,7 +59,7 @@ const setElderHeartRateDetail = asyncHandler(
 
       if (heartRateRecords) {
         weekAverage =
-          heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, 0) /
+          heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, req.body.beatsPerMinute) /
           heartRateRecords.length;
         weekMax = heartRateRecords.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
