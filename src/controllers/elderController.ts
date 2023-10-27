@@ -97,7 +97,8 @@ const setElderHeartRateDetail = asyncHandler(
   }
 );
 
-// @route   GET /api/elder/heart-rate-detail
+// ==============> GET LATEST HEART RATE RECORD
+// @route   GET /api/elder/heart-rate-details
 // @access  Private
 // @payload/header firebase id and token
 const getElderHeartRateDetail = asyncHandler(
@@ -119,19 +120,20 @@ const getElderHeartRateDetail = asyncHandler(
 
       const elderId = elder.id;
 
-      // ==============> GET PAST 7 DAYS HEART RATE RECORDS
+      // ==============> GET LATEST HEART RATE RECORD
       // Possibly index the timestamp column
       const heartRateRecords = await prisma.heartRateRecord.findMany({
         where: {
-          elderProfileId: elderId,
-          timestamp: {
-            gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
-          },
+          elderProfileId: elderId
         },
+        orderBy: {
+          timestamp: "desc",
+        },
+        take: 1,
       });
 
       if (heartRateRecords) {
-        res.status(200).json({ heartRateRecords });
+        res.status(200).json({ latestHeartRateRecord: heartRateRecords });
       } else {
         res.status(400).json({ message: "Heart Rate Details does not exist" });
       }
