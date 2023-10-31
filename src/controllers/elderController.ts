@@ -78,18 +78,22 @@ const setElderHeartRateDetail = asyncHandler(
       let weekMax = req.body.beatsPerMinute;
       let weekMin = req.body.beatsPerMinute;
 
-      if (heartRateRecords || heartRateRecords.length > 0) {
-        weekAverage =
-          heartRateRecords.reduce(
-            (acc, curr) => acc + curr.beatsPerMinute,
-            req.body.beatsPerMinute
-          ) /
-          (heartRateRecords.length + 1);
+      if (heartRateRecords) {
+        if (heartRateRecords.length === 0) {
+          weekAverage = req.body.beatsPerMinute;
+        } else {
+          weekAverage =
+            heartRateRecords.reduce(
+              (acc, curr) => acc + curr.beatsPerMinute,
+              req.body.beatsPerMinute
+            ) / heartRateRecords.length;
+        }
 
         weekMax = heartRateRecords.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
           req.body.beatsPerMinute
         );
+
         weekMin = heartRateRecords.reduce(
           (acc, curr) => Math.min(acc, curr.beatsPerMinute),
           req.body.beatsPerMinute
@@ -123,7 +127,11 @@ const setElderHeartRateDetail = asyncHandler(
       // ==============> SET HEART RATE Record
       const heartRateRecord = await prisma.heartRateRecord.create({
         data: {
-          elderProfileId: elderId,
+          elderProfile: {
+            connect: {
+              id: elderId,
+            },
+          },
           beatsPerMinute: beatsPerMinute,
           timestamp: timestamp,
           weekAverage: weekAverage,
