@@ -1,10 +1,10 @@
 
 
-export function consolidateWeeklyData(heartRateRecords: Array<any>, timestamps: Array<any>) {
+export function consolidateData(type: string, heartRateRecords: Array<any>, timestamps: Array<any>) {
 
-  const weekTimestamps = timestamps;
+  const givenTimestamps = timestamps;
   // ================================> Prepare Total Data Object
-  const totalData = weekTimestamps.reduce((acc, key) => {
+  const totalData = givenTimestamps.reduce((acc, key) => {
     acc[key] = { total: 0, item: 0 };
     return acc;
   }, {} as Record<string, { total: number; item: number }>);
@@ -15,10 +15,19 @@ export function consolidateWeeklyData(heartRateRecords: Array<any>, timestamps: 
     const beatsPerMinute = record.beatsPerMinute;
     const timestamp = record.timestamp;
 
-    const matchingTimestamp = withinOneDay(timestamp.toISOString(), weekTimestamps);
-    if (matchingTimestamp) {
-      totalData[matchingTimestamp].total += beatsPerMinute;
-      totalData[matchingTimestamp].item += 1;
+    if (type == "week") {
+        const matchingTimestamp = withinOneDay(timestamp.toISOString(), givenTimestamps);
+        if (matchingTimestamp) {
+          totalData[matchingTimestamp].total += beatsPerMinute;
+          totalData[matchingTimestamp].item += 1;
+        }      
+    } else if (type == "day") {
+      
+      const matchingTimestamp = withinOneHour(timestamp.toISOString(), givenTimestamps);
+      if (matchingTimestamp) {
+        totalData[matchingTimestamp].total += beatsPerMinute;
+        totalData[matchingTimestamp].item += 1;
+      }
     }
   }
 
@@ -42,6 +51,24 @@ export function consolidateWeeklyData(heartRateRecords: Array<any>, timestamps: 
 function withinOneDay(currentTimestamp: string, timestamps: Array<string>) {
   const currentTimestampDate = new Date(currentTimestamp);
   const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+  for (const timestamp of timestamps) {
+    const timestampDate = new Date(timestamp);
+    const timeDifference = Math.abs(
+      timestampDate.getTime() - currentTimestampDate.getTime()
+    );
+    // if the timedifference is less than 24 hours, return the timestamp
+    if (timeDifference < twentyFourHours) {
+      return timestamp;
+    }
+  }
+  return null; // Return null if no matching timestamp is found within 24 hours
+}
+
+
+function withinOneHour(currentTimestamp: string, timestamps: Array<string>) {
+  const currentTimestampDate = new Date(currentTimestamp);
+  const twentyFourHours = 1 * 60 * 60 * 1000; // 24 hours in milliseconds
 
   for (const timestamp of timestamps) {
     const timestampDate = new Date(timestamp);
