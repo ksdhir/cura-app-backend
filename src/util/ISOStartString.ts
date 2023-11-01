@@ -37,10 +37,16 @@ function generateISOWithOffset(offset: number) {
 
   // Create a Date object for midnight with the calculated hours and minutes
   const midnight = new Date();
-  if (hours < 0) {
-    midnight.setUTCHours(0 - hours, 0 - minutes, 0, 0);
-  } else {
-    midnight.setUTCHours(24 - hours, 0 - minutes, 0, 0);
+  midnight.setUTCHours(0 - hours, 0 - minutes, 0, 0);
+  
+  // currentUTC date
+  const currentUTC = new Date();
+  console.log(midnight, 'midnight')
+  console.log(currentUTC, 'currentUTC')
+
+  // adjust future date
+  if (midnight > currentUTC) {
+    midnight.setDate(midnight.getDate() - 1);
   }
 
   // Generate the ISO string
@@ -71,9 +77,9 @@ function ISOStartString(type: string, timeZone: string) {
 
 
 // ================================> Usage
-// const today = ISOStartString("Today", 'Asia/Singapore')
+// const today = ISOStartString("Today", 'America/Vancouver')
 // console.log(today)
-// const weekAgo = ISOStartString("WeekAgo", 'Asia/Manila')
+// const weekAgo = ISOStartString("WeekAgo", 'America/Vancouver')
 // console.log(weekAgo)
 
 export default ISOStartString;
