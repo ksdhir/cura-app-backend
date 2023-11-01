@@ -46,7 +46,7 @@ const setElderHeartRateDetail = asyncHandler(
 
       // ==============> GET PAST 7 DAYS HEART RATE RECORDS
       // Possibly index the timestamp column
-      const heartRateRecords = await prisma.heartRateRecord.findMany({
+      let heartRateRecords = await prisma.heartRateRecord.findMany({
         where: {
           elderProfileId: elderId,
           timestamp: {
@@ -61,18 +61,10 @@ const setElderHeartRateDetail = asyncHandler(
       let weekMax = req.body.beatsPerMinute;
       let weekMin = req.body.beatsPerMinute;
 
-      if (heartRateRecords) {
+      if (heartRateRecords || heartRateRecords.length > 0) {
 
-
-        if (heartRateRecords.length == 0) {
-
-          weekAverage = req.body.beatsPerMinute;
-
-        } else {
-          weekAverage = heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, req.body.beatsPerMinute) / heartRateRecords.length;
-        }
+        weekAverage = heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, req.body.beatsPerMinute) / heartRateRecords.length + 1;
       
-        
         weekMax = heartRateRecords.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
           req.body.beatsPerMinute
