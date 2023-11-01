@@ -26,4 +26,5 @@ caregiverRouter.get("/all-notification-log", caregiverNotificationLog);
 
 caregiverRouter.get("/store-push-notification-token", storePushNotificationToken);
 
+
 export default caregiverRouter;

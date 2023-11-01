@@ -9,6 +9,7 @@ import {
   updateElderHeartRateThreshold,
   upsertProfile,
   heartRateDataVisualisationWeekly,
+  heartRateDataVisualisationDaily
 } from "../controllers/elderController";
 import express from "express";
 
@@ -36,6 +37,7 @@ elderRouter.post("/append-notification-record", appendNotificationRecord);
 
 // data visualisation apis
 elderRouter.get("/weekly-heart-rate-data-visualisation", heartRateDataVisualisationWeekly)
+elderRouter.get("/daily-heart-rate-data-visualisation", heartRateDataVisualisationDaily)
 
 
 export default elderRouter;

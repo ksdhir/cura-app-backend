@@ -4,11 +4,11 @@ import { HeartRateThreshold, PrismaClient, Prisma } from "@prisma/client";
 import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
 import admin from "firebase-admin";
 import sendPushNotification from "../util/sendPushNotification";
-import { getISODays } from "../util/getISODates";
+import { getISODays, getISOHours} from "../util/getISODates";
 
 // import util functions
 import ISOStartString from "../util/ISOStartString";
-import { consolidateWeeklyData } from "../parsers/consolidateData";
+import { consolidateData } from "../parsers/consolidateData";
 
 // get recommended heart rate threshold based on age
 import getHeartRateThreshold from "../util/getHeartRateThreshold";
@@ -188,13 +188,66 @@ const heartRateDataVisualisationWeekly = asyncHandler(
       });
 
       // ===============================> CONSOLIDATE DATA WITHIN WEEK
-      const consoliteData = consolidateWeeklyData(
+      const consolidatedData = consolidateData(
+        "week",
         heartRateRecords,
         getISODays()
       );
 
       if (heartRateRecords) {
-        res.status(200).json({ consoliteData });
+        res.status(200).json({ consolidatedData });
+      } else {
+        res.status(400).json({ message: "Heart Rate Details does not exist" });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: "Could not process heart rate details" });
+    }
+  }
+);
+
+const heartRateDataVisualisationDaily = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      // elder email
+      const email = req.query.email;
+      const timezone = "America/Vancouver";
+      const startDateUTCString = ISOStartString("Today", timezone);
+
+      const sevenDaysAgo = new Date(startDateUTCString);
+
+      // ==============> GET ELDER ID
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: email.toString(),
+        },
+      });
+
+      if (!elder || elder.id === undefined) {
+        res.status(400).json({ message: "Elder profile does not exist" });
+      }
+
+      const elderId = elder.id;
+
+      const heartRateRecords = await prisma.heartRateRecord.findMany({
+        where: {
+          elderProfileId: elderId,
+          timestamp: {
+            gte: sevenDaysAgo,
+          },
+        },
+      });
+
+      // ===============================> CONSOLIDATE DATA WITHIN WEEK
+      const consolidatedData = consolidateData(
+        "day",
+        heartRateRecords,
+        getISOHours()
+      );
+
+
+      if (heartRateRecords) {
+        res.status(200).json({ consolidatedData });
       } else {
         res.status(400).json({ message: "Heart Rate Details does not exist" });
       }
@@ -708,4 +761,5 @@ export {
   addEmergencyContact,
   removeEmergencyContact,
   heartRateDataVisualisationWeekly,
+  heartRateDataVisualisationDaily
 };
