@@ -10,9 +10,6 @@ function getISOHours(clientTimezone: string = "America/Vancouver") {
   const startTime = new Date(isoStart);
   const endTime = new Date(isoNow);
 
-  console.log(startTime);
-  console.log(endTime);
-
   // Initialize an array to store the ISO timestamps
   const isoArray = [];
 
@@ -37,9 +34,6 @@ function getISODays(clientTimezone: string = "America/Vancouver") {
 
   const startTime = new Date(isoStart);
   const endTime = new Date(isoNow);
-
-  console.log(startTime);
-  console.log(endTime);
 
   // Initialize an array to store the ISO timestamps
   const isoArray = [];

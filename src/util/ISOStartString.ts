@@ -41,8 +41,6 @@ function generateISOWithOffset(offset: number) {
   
   // currentUTC date
   const currentUTC = new Date();
-  console.log(midnight, 'midnight')
-  console.log(currentUTC, 'currentUTC')
 
   // adjust future date
   if (midnight > currentUTC) {
