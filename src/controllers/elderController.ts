@@ -4,6 +4,11 @@ import { HeartRateThreshold, PrismaClient, Prisma } from "@prisma/client";
 import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
 import admin from "firebase-admin";
 import sendPushNotification from "../util/sendPushNotification";
+import { getISODays } from "../util/getISODates";
+
+// import util functions
+import ISOStartString from "../util/ISOStartString";
+import { consolidateWeeklyData } from "../parsers/consolidateData";
 
 // get recommended heart rate threshold based on age
 import getHeartRateThreshold from "../util/getHeartRateThreshold";
@@ -21,7 +26,6 @@ const setElderHeartRateDetail = asyncHandler(
       const email = req.body.email;
       const beatsPerMinute = Number(req.body.beatsPerMinute);
       const timestamp = req.body.timestamp;
-
 
       if (!email || !beatsPerMinute || !timestamp || beatsPerMinute == 0) {
         throw Error("Invalid Parameters");
@@ -58,9 +62,17 @@ const setElderHeartRateDetail = asyncHandler(
       let weekMin = req.body.beatsPerMinute;
 
       if (heartRateRecords) {
-        weekAverage =
-          heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, req.body.beatsPerMinute) /
-          heartRateRecords.length;
+
+
+        if (heartRateRecords.length == 0) {
+
+          weekAverage = req.body.beatsPerMinute;
+
+        } else {
+          weekAverage = heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, req.body.beatsPerMinute) / heartRateRecords.length;
+        }
+      
+        
         weekMax = heartRateRecords.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
           req.body.beatsPerMinute
@@ -124,7 +136,7 @@ const getElderHeartRateDetail = asyncHandler(
       // Possibly index the timestamp column
       const heartRateRecords = await prisma.heartRateRecord.findMany({
         where: {
-          elderProfileId: elderId
+          elderProfileId: elderId,
         },
         orderBy: {
           timestamp: "desc",
@@ -140,6 +152,55 @@ const getElderHeartRateDetail = asyncHandler(
     } catch (error) {
       console.log(error);
       res.status(400).json({ error: "An error occurred" });
+    }
+  }
+);
+
+const heartRateDataVisualisationWeekly = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      // elder email
+      const email = req.query.email;
+      const timezone = "America/Vancouver";
+      const weekAgoStartStringUTC = ISOStartString("WeekAgo", timezone);
+      const sevenDaysAgo = new Date(weekAgoStartStringUTC);
+
+      // ==============> GET ELDER ID
+      const elder = await prisma.elderProfile.findUnique({
+        where: {
+          email: email.toString(),
+        },
+      });
+
+      if (!elder || elder.id === undefined) {
+        res.status(400).json({ message: "Elder profile does not exist" });
+      }
+
+      const elderId = elder.id;
+
+      const heartRateRecords = await prisma.heartRateRecord.findMany({
+        where: {
+          elderProfileId: elderId,
+          timestamp: {
+            gte: sevenDaysAgo,
+          },
+        },
+      });
+
+      // ===============================> CONSOLIDATE DATA WITHIN WEEK
+      const consoliteData = consolidateWeeklyData(
+        heartRateRecords,
+        getISODays()
+      );
+
+      if (heartRateRecords) {
+        res.status(200).json({ consoliteData });
+      } else {
+        res.status(400).json({ message: "Heart Rate Details does not exist" });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ error: "Could not process heart rate details" });
     }
   }
 );
@@ -646,4 +707,5 @@ export {
   getProfileDetails,
   addEmergencyContact,
   removeEmergencyContact,
+  heartRateDataVisualisationWeekly,
 };
