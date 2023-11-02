@@ -4,7 +4,7 @@ import { HeartRateThreshold, PrismaClient, Prisma } from "@prisma/client";
 import { MIN_HEART_RATE, MAX_HEART_RATE, HEART_RATE } from "../constants";
 import admin from "firebase-admin";
 import sendPushNotification from "../util/sendPushNotification";
-import { getISODays, getISOHours} from "../util/getISODates";
+import { getISODays, getISOHours } from "../util/getISODates";
 
 // import util functions
 import ISOStartString from "../util/ISOStartString";
@@ -27,6 +27,12 @@ const setElderHeartRateDetail = asyncHandler(
       const beatsPerMinute = Number(req.body.beatsPerMinute);
       const timestamp = req.body.timestamp;
 
+      const timezone = "America/Vancouver";
+      const weekAgoStartStringUTC = ISOStartString("WeekAgo", timezone);
+      const sevenDaysAgo = new Date(weekAgoStartStringUTC);
+      const todayStartStringUTC = ISOStartString("Today", timezone);
+      const todayStart = new Date(todayStartStringUTC);
+
       if (!email || !beatsPerMinute || !timestamp || beatsPerMinute == 0) {
         throw Error("Invalid Parameters");
       }
@@ -46,30 +52,71 @@ const setElderHeartRateDetail = asyncHandler(
 
       // ==============> GET PAST 7 DAYS HEART RATE RECORDS
       // Possibly index the timestamp column
-      let heartRateRecords = await prisma.heartRateRecord.findMany({
+      const heartRateRecords = await prisma.heartRateRecord.findMany({
         where: {
           elderProfileId: elderId,
           timestamp: {
-            gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+            gte: sevenDaysAgo,
           },
         },
       });
 
-      // compute average, max, min
+      // ==============> GET PAST 7 DAYS HEART RATE RECORDS
+      // Possibly index the timestamp column
+      const heartRateRecordsToday = await prisma.heartRateRecord.findMany({
+        where: {
+          elderProfileId: elderId,
+          timestamp: {
+            gte: todayStart,
+          },
+        },
+      });
+
+      // compute average, max, min of the past 7 days
 
       let weekAverage = req.body.beatsPerMinute;
       let weekMax = req.body.beatsPerMinute;
       let weekMin = req.body.beatsPerMinute;
 
       if (heartRateRecords || heartRateRecords.length > 0) {
+        weekAverage =
+          heartRateRecords.reduce(
+            (acc, curr) => acc + curr.beatsPerMinute,
+            req.body.beatsPerMinute
+          ) /
+            heartRateRecords.length +
+          1;
 
-        weekAverage = heartRateRecords.reduce((acc, curr) => acc + curr.beatsPerMinute, req.body.beatsPerMinute) / heartRateRecords.length + 1;
-      
         weekMax = heartRateRecords.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
           req.body.beatsPerMinute
         );
         weekMin = heartRateRecords.reduce(
+          (acc, curr) => Math.min(acc, curr.beatsPerMinute),
+          req.body.beatsPerMinute
+        );
+      }
+
+      // compute average, max, min of the today
+
+      let todayAverage = req.body.beatsPerMinute;
+      let todayMax = req.body.beatsPerMinute;
+      let todayMin = req.body.beatsPerMinute;
+
+      if (heartRateRecordsToday || heartRateRecordsToday.length > 0) {
+        todayAverage =
+          heartRateRecordsToday.reduce(
+            (acc, curr) => acc + curr.beatsPerMinute,
+            req.body.beatsPerMinute
+          ) /
+            heartRateRecordsToday.length +
+          1;
+
+        todayMax = heartRateRecordsToday.reduce(
+          (acc, curr) => Math.max(acc, curr.beatsPerMinute),
+          req.body.beatsPerMinute
+        );
+        todayMin = heartRateRecordsToday.reduce(
           (acc, curr) => Math.min(acc, curr.beatsPerMinute),
           req.body.beatsPerMinute
         );
@@ -84,6 +131,9 @@ const setElderHeartRateDetail = asyncHandler(
           weekAverage: weekAverage,
           weekMax: weekMax,
           weekMin: weekMin,
+          todayAverage: todayAverage,
+          todayMax: todayMax,
+          todayMin: todayMin,
         },
       });
 
@@ -236,7 +286,6 @@ const heartRateDataVisualisationDaily = asyncHandler(
         heartRateRecords,
         getISOHours()
       );
-
 
       if (heartRateRecords) {
         res.status(200).json({ consolidatedData });
@@ -753,5 +802,5 @@ export {
   addEmergencyContact,
   removeEmergencyContact,
   heartRateDataVisualisationWeekly,
-  heartRateDataVisualisationDaily
+  heartRateDataVisualisationDaily,
 };
