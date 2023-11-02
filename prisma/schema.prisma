@@ -74,6 +74,9 @@ model HeartRateRecord {
   weekAverage Int
   weekMin Int
   weekMax Int
+  todayAverage Int?
+  todayMin Int?
+  todayMax Int?
 }
 
 //TYPE
