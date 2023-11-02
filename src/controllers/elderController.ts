@@ -84,8 +84,7 @@ const setElderHeartRateDetail = asyncHandler(
             (acc, curr) => acc + curr.beatsPerMinute,
             req.body.beatsPerMinute
           ) /
-            heartRateRecords.length +
-          1;
+          (heartRateRecords.length + 1);
 
         weekMax = heartRateRecords.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
@@ -109,8 +108,7 @@ const setElderHeartRateDetail = asyncHandler(
             (acc, curr) => acc + curr.beatsPerMinute,
             req.body.beatsPerMinute
           ) /
-            heartRateRecordsToday.length +
-          1;
+          (heartRateRecordsToday.length + 1);
 
         todayMax = heartRateRecordsToday.reduce(
           (acc, curr) => Math.max(acc, curr.beatsPerMinute),
