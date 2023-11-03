@@ -27,14 +27,14 @@ const caregiverProfileCreation = asyncHandler(
           email: req.body.email,
         },
         update: {
-          name: req.body.name,
-          preferredName: req.body.preferredName,
+          name: req.body.name ?? req.body.preferredName,
+          preferredName: req.body.preferredName ?? req.body.name,
           phoneNumber: req.body.phoneNumber,
           requestToken: req.body.requestToken ?? null,
         },
         create: {
-          name: req.body.name,
-          preferredName: req.body.preferredName,
+          name: req.body.name ?? req.body.preferredName,
+          preferredName: req.body.preferredName ?? req.body.name,
           email: req.body.email,
           phoneNumber: req.body.phoneNumber,
           requestToken: req.body.requestToken ?? null,
@@ -81,7 +81,9 @@ const caregiverProfile = asyncHandler(async (req: Request, res: Response) => {
     delete caregiver?.requestToken;
 
     if (caregiver) {
-      res.status(200).json({ caregiver: {...caregiver, 'elderEmails': elderEmails} });
+      res
+        .status(200)
+        .json({ caregiver: { ...caregiver, elderEmails: elderEmails } });
     } else {
       res.status(400).json({ message: "Caregiver profile does not exist" });
     }
