@@ -53,7 +53,7 @@ model Notification {
   // elderProfileEmail String @map("elderProfileEmail_idx")
   timestamp DateTime @default(now())
   type NotificationType
-  location String[]
+  payload NotificationPayload?
 
   // careGiverProfile CareGiverProfile? @relation(fields: [careGiverProfileId], references: [id])
   // careGiverProfileId String @db.ObjectId
@@ -91,11 +91,25 @@ type HeartRateThreshold {
   lastUpdated DateTime @default(now())
 }
 
+type NotificationPayload {
+  message String
+  maxHeartRate Int?
+  minHeartRate Int?
+  location LocationWithCoordinates?
+}
+
+type LocationWithCoordinates {
+  location String?
+  latitude Float
+  longitude Float
+}
+
 //ENUMS
 enum NotificationType {
   MOVEMENT_LOCATION
   FALL_DETECTED
-  CRITICAL_HEART_RATE
+  CRITICAL_LOW_HEART_RATE
+  CRITICAL_HIGH_HEART_RATE
 }
 
 
