@@ -86,7 +86,8 @@ const setElderHeartRateDetail = asyncHandler(
             heartRateRecords.reduce(
               (acc, curr) => acc + curr.beatsPerMinute,
               req.body.beatsPerMinute
-            ) / (heartRateRecords.length + 1);
+            ) /
+            (heartRateRecords.length + 1);
         }
 
         weekMax = heartRateRecords.reduce(
@@ -313,6 +314,7 @@ const appendNotificationRecord = asyncHandler(
     try {
       const email = req.body.email;
       const type = req.body.type;
+      const payload = req.body.payload ?? null;
 
       if (
         type !== "MOVEMENT_LOCATION" &&
@@ -375,7 +377,7 @@ const appendNotificationRecord = asyncHandler(
         data: {
           elderProfileId: elderId,
           type: type,
-          location: location,
+          payload,
         },
       });
 
@@ -394,21 +396,21 @@ const appendNotificationRecord = asyncHandler(
           careGiverTokens,
           "Elder Critical Heart Rate Detected",
           "Your elder has a critical heart rate. Click to view more.",
-          { location }
+          { payload }
         );
       } else if (type == "FALL_DETECTED") {
         sendPushNotification(
           careGiverTokens,
           "Elder Fall Detected",
           "Your elder might have fell down. Contact and connect now.",
-          { location }
+          { payload }
         );
       } else if (type == "MOVEMENT_LOCATION") {
         sendPushNotification(
           careGiverTokens,
           "Elder Far from Home",
           "Your elder seems to be far from Home. Click to view current location.",
-          { location }
+          { payload }
         );
       }
       // ======================================> Different Kinds of Notifications END
