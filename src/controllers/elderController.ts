@@ -396,21 +396,21 @@ const appendNotificationRecord = asyncHandler(
           careGiverTokens,
           "Elder Critical Heart Rate Detected",
           "Your elder has a critical heart rate. Click to view more.",
-          { payload }
+          { payload, type, elderEmail: email }
         );
       } else if (type == "FALL_DETECTED") {
         sendPushNotification(
           careGiverTokens,
           "Elder Fall Detected",
           "Your elder might have fell down. Contact and connect now.",
-          { payload }
+          { payload, type, elderEmail: email, elderPhoneNumber: elder.phoneNumber, elderName: elder.name }
         );
       } else if (type == "MOVEMENT_LOCATION") {
         sendPushNotification(
           careGiverTokens,
           "Elder Far from Home",
           "Your elder seems to be far from Home. Click to view current location.",
-          { payload }
+          { payload, type, elderEmail: email }
         );
       }
       // ======================================> Different Kinds of Notifications END
