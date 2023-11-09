@@ -425,7 +425,7 @@ const appendNotificationRecord = asyncHandler(
 
 
       // if type is MOVEMENT_LOCATION, then reverse geocode the latitude and longitude to get the address
-      if (type === "MOVEMENT_LOCATION") {
+      if (type === "MOVEMENT_LOCATION" || type === "FALL_DETECTED") {
         const latitude = payload.location.latitude;
         const longitude = payload.location.longitude;
         const data = await reverseGeocodeTomTom(latitude, longitude);
