@@ -9,7 +9,8 @@ import {
   updateElderHeartRateThreshold,
   upsertProfile,
   heartRateDataVisualisationWeekly,
-  heartRateDataVisualisationDaily
+  heartRateDataVisualisationDaily,
+  reverseGeocoding
 } from "../controllers/elderController";
 import express from "express";
 
@@ -38,6 +39,9 @@ elderRouter.post("/append-notification-record", appendNotificationRecord);
 // data visualisation apis
 elderRouter.get("/weekly-heart-rate-data-visualisation", heartRateDataVisualisationWeekly)
 elderRouter.get("/daily-heart-rate-data-visualisation", heartRateDataVisualisationDaily)
+
+// Reverse Geocoding
+elderRouter.get("/reverse-geocode", reverseGeocoding)
 
 
 export default elderRouter;

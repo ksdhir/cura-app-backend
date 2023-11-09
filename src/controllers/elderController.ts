@@ -306,6 +306,56 @@ const heartRateDataVisualisationDaily = asyncHandler(
   }
 );
 
+async function reverseGeocodeTomTom(latitude: any, longitude: any) {
+  try {
+    const tomtomapi = `https://api.tomtom.com/search/2/reverseGeocode/${latitude},${longitude}.json?radius=10000&key=${process.env.TOMTOM_API_KEY}`;
+
+    const response = await fetch(tomtomapi);
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    throw new Error("Could not reverse geocode");
+  }
+}
+
+
+const reverseGeocoding = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+
+      const latitude = req.query.latitude;
+      const longitude = req.query.longitude;
+
+      const data = await reverseGeocodeTomTom(latitude, longitude);
+
+      if (!data.addresses || !data.summary || !data.summary.numResults) {
+        res.status(400).json({ message: "Could not find location" });
+        return;
+      }
+
+      if (!data.addresses || !data.summary || !data.summary.numResults) {
+        res.status(400).json({ message: "Could not find location" });
+        return;
+      }
+
+      if (data.error) {
+        res.status(400).json({ message: data.error });
+      }
+
+      const freeformAddress = data.addresses[0].address.freeformAddress;
+
+      res.status(200).json({ address: freeformAddress });
+    } catch (error) {
+      console.error("Error: ", error);
+      // throw new Error("Error in reverse geocoding")
+      res.status(400).json({ message: "Error in reverse geocoding" });
+    }
+  }
+);
+
+// TODO implement reverse geocding here
+
 // @route   POST /api/elder/append-notification-record
 // @access  Private
 // @payload/header firebase id and token
@@ -403,7 +453,13 @@ const appendNotificationRecord = asyncHandler(
           careGiverTokens,
           "Elder Fall Detected",
           "Your elder might have fell down. Contact and connect now.",
-          { payload, type, elderEmail: email, elderPhoneNumber: elder.phoneNumber, elderName: elder.name }
+          {
+            payload,
+            type,
+            elderEmail: email,
+            elderPhoneNumber: elder.phoneNumber,
+            elderName: elder.name,
+          }
         );
       } else if (type == "MOVEMENT_LOCATION") {
         sendPushNotification(
@@ -811,4 +867,5 @@ export {
   removeEmergencyContact,
   heartRateDataVisualisationWeekly,
   heartRateDataVisualisationDaily,
+  reverseGeocoding,
 };
