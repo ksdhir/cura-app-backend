@@ -422,6 +422,34 @@ const appendNotificationRecord = asyncHandler(
 
       // ===============================> TEST NOTIFICATION ENDS
 
+
+
+      // if type is MOVEMENT_LOCATION, then reverse geocode the latitude and longitude to get the address
+      if (type === "MOVEMENT_LOCATION") {
+        const latitude = payload.location.latitude;
+        const longitude = payload.location.longitude;
+        const data = await reverseGeocodeTomTom(latitude, longitude);
+
+        if (!data.addresses || !data.summary || !data.summary.numResults) {
+          res.status(400).json({ message: "Could not find location" });
+          return;
+        }
+  
+        if (!data.addresses || !data.summary || !data.summary.numResults) {
+          res.status(400).json({ message: "Could not find location" });
+          return;
+        }
+  
+        if (data.error) {
+          res.status(400).json({ message: "Could not find location" });
+        }
+  
+        const freeformAddress = data.addresses[0].address.freeformAddress;
+        payload.location.address = freeformAddress;
+        // console.log(freeformAddress)
+      }
+
+
       // append notification record in the database
       const notificationRecord = await prisma.notification.create({
         data: {
