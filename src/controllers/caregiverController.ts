@@ -113,20 +113,37 @@ const caregiverNotificationLog = asyncHandler(
 
       const elderId = elder.id;
 
-      const notificationLog = await prisma.notification.findMany({
-        where: {
-          elderProfileId: elderId,
-          type: type as NotificationType,
-        },
-        orderBy: {
-          timestamp: "desc",
-        },
-      });
+      if (type == "ALL") {
+        const notificationLog = await prisma.notification.findMany({
+          where: {
+            elderProfileId: elderId,
+          },
+          orderBy: {
+            timestamp: "desc",
+          },
+        });
 
-      if (notificationLog) {
-        res.status(200).json({ notificationLog });
+        if (notificationLog) {
+          res.status(200).json({ notificationLog });
+        } else {
+          throw Error("No notification log found");
+        }
       } else {
-        throw Error("No notification log found");
+        const notificationLog = await prisma.notification.findMany({
+          where: {
+            elderProfileId: elderId,
+            type: type as NotificationType,
+          },
+          orderBy: {
+            timestamp: "desc",
+          },
+        });
+
+        if (notificationLog) {
+          res.status(200).json({ notificationLog });
+        } else {
+          throw Error("No notification log found");
+        }
       }
     } catch (error) {
       res.status(400).json({ errorx: "An error occurred", error: error });
