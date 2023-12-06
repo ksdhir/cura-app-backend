@@ -17,14 +17,14 @@ caregiverRouter.post(
   authTokenVerifyMiddleware,
   caregiverProfileCreation
 );
-caregiverRouter.get("/profile", caregiverProfile);
+caregiverRouter.get("/profile", authTokenVerifyMiddleware ,caregiverProfile);
 
 
 // Get all notifications log by type and elder in descending order timestamp
-caregiverRouter.get("/all-notification-log", caregiverNotificationLog);
+caregiverRouter.get("/all-notification-log",authTokenVerifyMiddleware, caregiverNotificationLog);
 // Get latest notification record by type and elder
 
-caregiverRouter.get("/store-push-notification-token", storePushNotificationToken);
+caregiverRouter.get("/store-push-notification-token", authTokenVerifyMiddleware, storePushNotificationToken);
 
 
 export default caregiverRouter;
