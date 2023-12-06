@@ -88,7 +88,7 @@ const caregiverProfile = asyncHandler(async (req: Request, res: Response) => {
       res.status(400).json({ message: "Caregiver profile does not exist" });
     }
   } catch (error) {
-    res.status(400).json({ errorx: "An error occurred", error: error });
+    res.status(400).json({ message: "Failed to get elder email of caregiver", error: error });
   }
 });
 
