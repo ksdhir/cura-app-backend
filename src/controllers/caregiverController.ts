@@ -137,6 +137,7 @@ const caregiverNotificationLog = asyncHandler(
           orderBy: {
             timestamp: "desc",
           },
+          take: 6,
         });
 
         if (notificationLog) {
